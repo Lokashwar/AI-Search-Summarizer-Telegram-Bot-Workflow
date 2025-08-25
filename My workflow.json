@@ -1,0 +1,189 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "query": "={{ $json.message.text }}",
+        "options": {}
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavily",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -64
+      ],
+      "id": "a6388b84-dd94-4c24-a938-878ae5327fcf",
+      "name": "Search",
+      "credentials": {
+        "tavilyApi": {
+          "id": "w0lUfMEDXfPUSGww",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = items.map((item) => item?.json?.results);\nconst flattenedResults = [].concat.apply([], results);\nconst resultString = flattenedResults\n  .map((result) => `${result.title}: ${result.content}`)\n  .join(\", \");\n\nreturn { resultString };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -64
+      ],
+      "id": "ae19ab73-f8da-4f5d-babb-1a22e4c32d7d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.resultString }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant so help me in summarizing in a few words"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -64
+      ],
+      "id": "3ed5d1cc-b1e3-4090-9207-4d1c2726912b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-r1-distill-llama-70b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        256,
+        128
+      ],
+      "id": "e9576b17-eb0d-45fb-a291-a4386a0e5775",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "PiyFh1DpFDWDYWtN",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -544,
+        -64
+      ],
+      "id": "287bac06-c040-4acd-8389-949365493ffe",
+      "name": "Telegram Trigger",
+      "webhookId": "f941e1c6-34b7-4442-a7e6-39b02e538b87",
+      "credentials": {
+        "telegramApi": {
+          "id": "JEWwPkudu9UXE06z",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        -64
+      ],
+      "id": "9f572bc1-a068-418a-b8d1-1f7fd207138f",
+      "name": "Send a text message",
+      "webhookId": "2d4edced-e507-4476-ac76-e5db64490838",
+      "credentials": {
+        "telegramApi": {
+          "id": "JEWwPkudu9UXE06z",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "faabd562-7de9-4115-96d8-4996a78f4a9d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "266c5ff48003191d04266d0fb9d40b4d3d0ff6a4a194408a282dac06d98ee7ce"
+  },
+  "id": "whpHj8vY86cAwVvl",
+  "tags": []
+}
